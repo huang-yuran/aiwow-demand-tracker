@@ -1,0 +1,157 @@
+// APP 開發進度追蹤平台
+// 版本的真實來源在 dev_items.release_version；需求層的版本與狀態一律為衍生值（見 requirement_rollup view，migration 中以 raw SQL 建立）。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  boss
+  pm
+  qa
+  rd
+}
+
+enum Priority {
+  高
+  中
+  低
+}
+
+enum ItemStatus {
+  尚未開始
+  進行中
+  待測試
+  已完成
+}
+
+enum BugStatus {
+  待處理
+  處理中
+  已修復待驗證
+  已關閉
+}
+
+enum Severity {
+  嚴重
+  中
+  輕微
+}
+
+enum ReleaseStage {
+  開發中
+  QA測試中
+  已進TestFlight
+  已送審
+  已上架
+}
+
+/// 使用者。role 對本次交付（老闆視角）非必要，全站「輸入姓名」機制自動建立/比對出來的人先不指定角色。
+model User {
+  id    String    @id @default(uuid())
+  name  String
+  role  UserRole?
+  email String?   @unique
+
+  requirementsCreatedBy Requirement[] @relation("RequirementCreatedBy")
+  devItemsAssigned      DevItem[]     @relation("DevItemAssignee")
+  bugsReported          Bug[]         @relation("BugReporter")
+  bugsAssigned          Bug[]         @relation("BugAssignee")
+
+  @@map("users")
+}
+
+model Release {
+  version            String        @id // 四碼版號，例 'v1.2.0.24'
+  plannedDate        DateTime?     @map("planned_date") @db.Date
+  stage              ReleaseStage? // NULL = 尚未排程
+  iosVersionName     String?       @map("ios_version_name") // iOS 測試版本名稱（如 TestFlight build 名稱）
+  androidVersionName String?       @map("android_version_name") // Android 版本名稱
+
+  devItems DevItem[]
+
+  @@map("releases")
+}
+
+model Requirement {
+  id            String    @id // 'R-014'
+  title         String // 需求描述（老闆語言）
+  theme         String // 主題：通知/首頁/會員/報表/客服/效能/付款…
+  origin        String? // 源自於，例 '群組回報'
+  originDate    DateTime? @map("origin_date") @db.Date
+  requesterName String    @map("requester_name") // 提出人顯示名（老闆／營運部／客服部）
+  priority      Priority  @default(中)
+  note          String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  createdById String? @map("created_by_id")
+  createdBy   User?   @relation("RequirementCreatedBy", fields: [createdById], references: [id])
+
+  devItems    DevItem[]
+  attachments RequirementAttachment[]
+
+  @@map("requirements")
+}
+
+model RequirementAttachment {
+  id            String      @id @default(uuid())
+  requirementId String      @map("requirement_id")
+  requirement   Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  url           String // Supabase Storage 公開網址
+  path          String // Storage 內部路徑，刪除時需要
+  fileName      String      @map("file_name")
+  mimeType      String      @map("mime_type")
+  size          Int // bytes
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  @@index([requirementId])
+  @@map("requirement_attachments")
+}
+
+model DevItem {
+  id             String      @id // 'D-0142'
+  requirementId  String      @map("requirement_id")
+  requirement    Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  content        String // 開發內容（RD 視角，可用技術用語）
+  plainText      String      @map("plain_text") // 老闆視角白話描述
+  feature        String? // 主功能
+  releaseVersion String?     @map("release_version") // 單一版本，手動指定；NULL = 未排定
+  release        Release?    @relation(fields: [releaseVersion], references: [version])
+  seqNo          String?     @map("seq_no") // 版本內流水號，例 '12-01'；未排定版本可留空或 'TBD-01'
+  assigneeId     String?     @map("assignee_id")
+  assignee       User?       @relation("DevItemAssignee", fields: [assigneeId], references: [id])
+  status         ItemStatus  @default(尚未開始)
+  updatedAt      DateTime    @default(now()) @map("updated_at")
+
+  bugs Bug[]
+
+  @@index([releaseVersion])
+  @@index([requirementId])
+  @@index([assigneeId, status])
+  @@map("dev_items")
+}
+
+model Bug {
+  id          String    @id // 'B-0031'
+  devItemId   String    @map("dev_item_id")
+  devItem     DevItem   @relation(fields: [devItemId], references: [id], onDelete: Cascade)
+  description String
+  steps       String? // 重現步驟
+  severity    Severity  @default(中)
+  reporterId  String?   @map("reporter_id")
+  reporter    User?     @relation("BugReporter", fields: [reporterId], references: [id])
+  assigneeId  String?   @map("assignee_id")
+  assignee    User?     @relation("BugAssignee", fields: [assigneeId], references: [id])
+  status      BugStatus @default(待處理)
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([devItemId])
+  @@index([assigneeId, status])
+  @@map("bugs")
+}

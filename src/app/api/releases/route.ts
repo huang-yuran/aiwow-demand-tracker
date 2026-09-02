@@ -16,13 +16,6 @@ function compareVersions(a: string, b: string) {
   return 0;
 }
 
-// 開發中 → QA 測試中 → 已進 TestFlight → 已送審 → 已上架；尚未排程排在開發中之前
-function stageRank(stage: string | null) {
-  if (stage === null) return -1;
-  const idx = STAGES.indexOf(stage as (typeof STAGES)[number]);
-  return idx === -1 ? 99 : idx;
-}
-
 // A1 版本視圖：依版本分組的細項清單＋對應需求（含未排定版本）
 export async function GET() {
   const [releases, devItems] = await Promise.all([
@@ -68,18 +61,13 @@ export async function GET() {
     };
   }
 
-  // 依發布階段排序（已上架排最後）；同一階段內依版號新到舊排（由上到下＝離現在近到遠）
-  const sorted = releases
-    .slice()
-    .sort((a, b) => stageRank(a.stage) - stageRank(b.stage) || compareVersions(b.version, a.version));
-  const notLive = sorted.filter((r) => r.stage !== "已上架");
-  const live = sorted.filter((r) => r.stage === "已上架");
+  // 不管版本狀態，純依版號新到舊排（由上到下＝離現在近到遠）；未排定放最後
+  const sorted = releases.slice().sort((a, b) => compareVersions(b.version, a.version));
 
-  const cards = notLive.map((r) => buildCard(r.version, r.stage, r.plannedDate, r.iosVersionName, r.androidVersionName));
+  const cards = sorted.map((r) => buildCard(r.version, r.stage, r.plannedDate, r.iosVersionName, r.androidVersionName));
   if (byVersion.has(null)) {
     cards.push(buildCard(null, null, null));
   }
-  cards.push(...live.map((r) => buildCard(r.version, r.stage, r.plannedDate, r.iosVersionName, r.androidVersionName)));
 
   return NextResponse.json({ versions: cards });
 }

@@ -3,9 +3,12 @@ import { STAGES } from "./designTokens";
 
 // 與 prisma/migrations/.../requirement_rollup view 邏輯保持一致（README「衍生規則」）。
 
-export type ReqStatus = "規劃中" | "開發中" | "測試中" | "已完成";
+export type ReqStatus = "規劃中" | "開發中" | "測試中" | "已完成" | "不開發" | "十月再討論";
 
-export function statusOf(tasks: { status: string }[]): ReqStatus {
+export const REQ_STATUSES: ReqStatus[] = ["規劃中", "開發中", "測試中", "已完成", "不開發", "十月再討論"];
+
+export function statusOf(tasks: { status: string }[], statusOverride?: string | null): ReqStatus {
+  if (statusOverride) return statusOverride as ReqStatus;
   if (tasks.length === 0) return "規劃中";
   if (tasks.every((t) => t.status === "已完成")) return "已完成";
   if (tasks.some((t) => t.status === "待測試") && !tasks.some((t) => t.status === "進行中")) return "測試中";

@@ -29,7 +29,9 @@ export type RequirementDTO = {
   note: string | null;
   createdAt: string;
   tasks: DevItemDTO[];
-  status: "規劃中" | "開發中" | "測試中" | "已完成";
+  status: "規劃中" | "開發中" | "測試中" | "已完成" | "不開發" | "十月再討論";
+  statusOverride: "規劃中" | "開發中" | "測試中" | "已完成" | "不開發" | "十月再討論" | null;
+  notDevelopedReason: string | null;
   pct: number;
   versions: string[];
   source: "老闆需求" | "行銷需求" | "用戶需求";
@@ -50,6 +52,9 @@ export type ReleaseItemDTO = {
 export type ReleaseCardDTO = {
   version: string;
   plannedDate: string | null;
+  qaStartDate: string | null;
+  testflightDate: string | null;
+  reviewResultDate: string | null;
   stage: string | null;
   iosVersionName: string | null;
   androidVersionName: string | null;
@@ -74,4 +79,19 @@ export type ImportPreviewRow = {
   priority: string;
   note: string;
   issues: string[];
+};
+
+export type ScheduleMilestoneDTO = {
+  date: string; // yyyy-mm-dd
+  version: string;
+  kind: "qa" | "testflight" | "review" | "release";
+  label: string;
+  note: string | null;
+  daysFromToday: number;
+};
+
+export type ScheduleDTO = {
+  current: { version: string; stage: string | null; nextStep: string | null } | null;
+  range: { from: string; to: string };
+  milestones: ScheduleMilestoneDTO[];
 };

@@ -39,6 +39,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ve
     stage = body.stage as ReleaseStage;
   }
 
+  function dateField(value: unknown): Date | null | undefined {
+    if (value === undefined) return undefined;
+    if (typeof value === "string" && value) return new Date(value);
+    return null;
+  }
+
   const updated = await prisma.release.update({
     where: { version },
     data: {
@@ -46,6 +52,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ve
       stage,
       iosVersionName: body.iosVersionName === undefined ? undefined : (body.iosVersionName || null),
       androidVersionName: body.androidVersionName === undefined ? undefined : (body.androidVersionName || null),
+      nextStepNote: body.nextStepNote === undefined ? undefined : (body.nextStepNote || null),
+      plannedDate: dateField(body.plannedDate),
+      qaStartDate: dateField(body.qaStartDate),
+      testflightDate: dateField(body.testflightDate),
+      reviewResultDate: dateField(body.reviewResultDate),
     },
   });
 
@@ -53,7 +64,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ve
     version: updated.version,
     stage: updated.stage,
     plannedDate: updated.plannedDate,
+    qaStartDate: updated.qaStartDate,
+    testflightDate: updated.testflightDate,
+    reviewResultDate: updated.reviewResultDate,
     iosVersionName: updated.iosVersionName,
     androidVersionName: updated.androidVersionName,
+    nextStepNote: updated.nextStepNote,
   });
 }

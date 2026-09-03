@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { STAGES, STAGE_LABEL, FONT_TC } from "@/lib/designTokens";
 import type { ReleaseCardDTO } from "@/lib/types";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 const inputStyle: React.CSSProperties = {
   border: "1px solid #C7CCD2",
@@ -21,6 +22,11 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 4,
 };
 
+function dateToInputValue(d: string | null): string {
+  if (!d) return "";
+  return d.slice(0, 10);
+}
+
 export function VersionEditForm({
   card,
   onCancel,
@@ -31,10 +37,15 @@ export function VersionEditForm({
   onSaved: () => void;
 }) {
   const isCreate = card === null;
+  const isMobile = useIsMobile();
   const [versionName, setVersionName] = useState(card?.version ?? "");
   const [stage, setStage] = useState<string>(card?.stage ?? "");
   const [iosVersionName, setIosVersionName] = useState(card?.iosVersionName ?? "");
   const [androidVersionName, setAndroidVersionName] = useState(card?.androidVersionName ?? "");
+  const [plannedDate, setPlannedDate] = useState(dateToInputValue(card?.plannedDate ?? null));
+  const [qaStartDate, setQaStartDate] = useState(dateToInputValue(card?.qaStartDate ?? null));
+  const [testflightDate, setTestflightDate] = useState(dateToInputValue(card?.testflightDate ?? null));
+  const [reviewResultDate, setReviewResultDate] = useState(dateToInputValue(card?.reviewResultDate ?? null));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,6 +62,10 @@ export function VersionEditForm({
         stage: stage || null,
         iosVersionName: iosVersionName.trim() || null,
         androidVersionName: androidVersionName.trim() || null,
+        plannedDate: plannedDate || null,
+        qaStartDate: qaStartDate || null,
+        testflightDate: testflightDate || null,
+        reviewResultDate: reviewResultDate || null,
       };
       const res = await fetch(isCreate ? "/api/releases" : `/api/releases/${encodeURIComponent(card.version)}`, {
         method: isCreate ? "POST" : "PATCH",
@@ -74,7 +89,7 @@ export function VersionEditForm({
       onClick={(e) => e.stopPropagation()}
       style={{ padding: "16px 18px", background: "#F7F8F9", borderBottom: "1px solid #E4E7EA" }}
     >
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: stage ? 12 : 0 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14, marginBottom: 12 }}>
         <div>
           <div style={labelStyle}>版本名稱</div>
           <input value={versionName} onChange={(e) => setVersionName(e.target.value)} style={inputStyle} />
@@ -92,8 +107,27 @@ export function VersionEditForm({
         </div>
       </div>
 
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap: 14, marginBottom: stage ? 12 : 0 }}>
+        <div>
+          <div style={labelStyle}>開始測試日</div>
+          <input type="date" value={qaStartDate} onChange={(e) => setQaStartDate(e.target.value)} style={inputStyle} />
+        </div>
+        <div>
+          <div style={labelStyle}>進 TestFlight 日</div>
+          <input type="date" value={testflightDate} onChange={(e) => setTestflightDate(e.target.value)} style={inputStyle} />
+        </div>
+        <div>
+          <div style={labelStyle}>審核結果日</div>
+          <input type="date" value={reviewResultDate} onChange={(e) => setReviewResultDate(e.target.value)} style={inputStyle} />
+        </div>
+        <div>
+          <div style={labelStyle}>預計上線日</div>
+          <input type="date" value={plannedDate} onChange={(e) => setPlannedDate(e.target.value)} style={inputStyle} />
+        </div>
+      </div>
+
       {stage && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 12 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14, marginBottom: 12 }}>
           <div>
             <div style={labelStyle}>iOS 測試版本名稱</div>
             <input

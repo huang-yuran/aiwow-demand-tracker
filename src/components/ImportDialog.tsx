@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { FONT_TC } from "@/lib/designTokens";
 import type { ImportPreviewRow } from "@/lib/types";
 import { useActor } from "@/lib/identityContext";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 type Step = "idle" | "preview" | "done";
 
@@ -16,6 +17,7 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const actor = useActor();
+  const isMobile = useIsMobile();
 
   async function handleFile(file: File) {
     setLoading(true);
@@ -73,15 +75,15 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
       <div
         style={{
           position: "fixed",
-          top: 84,
+          top: isMobile ? 16 : 84,
           left: "50%",
           transform: "translateX(-50%)",
-          width: 640,
+          width: "min(640px, calc(100vw - 32px))",
           background: "#FFFFFF",
           border: "1px solid #C7CCD2",
           borderRadius: 2,
           fontFamily: "'IBM Plex Sans', 'Noto Sans TC', sans-serif",
-          maxHeight: "80vh",
+          maxHeight: isMobile ? "calc(100vh - 32px)" : "80vh",
           overflowY: "auto",
         }}
       >
@@ -96,6 +98,7 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
           <div
             style={{
               display: "flex",
+              flexWrap: "wrap",
               alignItems: "center",
               justifyContent: "space-between",
               gap: 16,
@@ -184,12 +187,13 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
                   換一個檔案
                 </button>
               </div>
-              <div style={{ border: "1px solid #E4E7EA" }}>
+              <div style={{ border: "1px solid #E4E7EA", overflowX: "auto" }}>
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 78px 130px 92px",
+                    gridTemplateColumns: "minmax(200px, 1fr) 78px 130px 92px",
                     gap: 12,
+                    minWidth: 520,
                     padding: "8px 12px",
                     background: "#F7F8F9",
                     borderBottom: "1px solid #E4E7EA",
@@ -206,7 +210,7 @@ export function ImportDialog({ onClose, onImported }: { onClose: () => void; onI
                 {rows.map((row) => (
                   <div
                     key={row.rowIndex}
-                    style={{ display: "grid", gridTemplateColumns: "1fr 78px 130px 92px", gap: 12, padding: "9px 12px", borderBottom: "1px solid #EDEFF1", alignItems: "center" }}
+                    style={{ display: "grid", gridTemplateColumns: "minmax(200px, 1fr) 78px 130px 92px", gap: 12, minWidth: 520, padding: "9px 12px", borderBottom: "1px solid #EDEFF1", alignItems: "center" }}
                   >
                     <div style={{ fontFamily: FONT_TC, fontSize: 12.5, lineHeight: 1.45 }}>{row.title || "（未填）"}</div>
                     <div style={{ fontFamily: FONT_TC, fontSize: 12, color: "#5C646E" }}>{row.theme || "（未填）"}</div>

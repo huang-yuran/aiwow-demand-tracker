@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { FONT_TC, STATUS_COLOR } from "@/lib/designTokens";
 import type { DevItemDTO, UserDTO } from "@/lib/types";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 const labelStyle: React.CSSProperties = {
   fontSize: 11,
@@ -35,6 +36,7 @@ export function DevItemForm({
   onSaved: () => void;
 }) {
   const isEdit = !!devItem;
+  const isMobile = useIsMobile();
   const [plainText, setPlainText] = useState(devItem?.plainText ?? "");
   const [content, setContent] = useState(devItem?.content ?? "");
   const [feature, setFeature] = useState(devItem?.feature ?? "");
@@ -97,15 +99,15 @@ export function DevItemForm({
       <div
         style={{
           position: "fixed",
-          top: 60,
+          top: isMobile ? 16 : 60,
           left: "50%",
           transform: "translateX(-50%)",
-          width: 520,
+          width: "min(520px, calc(100vw - 32px))",
           background: "#FFFFFF",
           border: "1px solid #C7CCD2",
           borderRadius: 2,
           fontFamily: "'IBM Plex Sans', 'Noto Sans TC', sans-serif",
-          maxHeight: "85vh",
+          maxHeight: isMobile ? "calc(100vh - 32px)" : "85vh",
           overflowY: "auto",
           zIndex: 11,
         }}
@@ -130,7 +132,7 @@ export function DevItemForm({
             <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={2} style={{ ...inputStyle, resize: "vertical" }} />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
             <div>
               <div style={labelStyle}>主功能</div>
               <input value={feature} onChange={(e) => setFeature(e.target.value)} style={inputStyle} />
@@ -148,7 +150,7 @@ export function DevItemForm({
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
             <div>
               <div style={labelStyle}>負責 RD</div>
               <select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} style={{ ...inputStyle, background: "#FFFFFF" }}>

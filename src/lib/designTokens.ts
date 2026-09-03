@@ -8,6 +8,8 @@ export const STATUS_COLOR: Record<string, string> = {
   "測試中": "#A07B22",
   "待測試": "#A07B22",
   "已完成": "#3F7A52",
+  "不開發": "#9C4A3B",
+  "十月再討論": "#6B5FA0",
 };
 
 export const PRIORITY_COLOR: Record<string, string> = {
@@ -45,3 +47,21 @@ export const STAGE_STYLE: Record<string, [string, string, string]> = {
 
 export const FONT_TC = "'Noto Sans TC', sans-serif";
 export const FONT_BASE = "'IBM Plex Sans', 'Noto Sans TC', sans-serif";
+
+// 時程表節點種類，對應 schedule_notes.milestone_kind
+export const MILESTONE_KINDS = ["qa", "testflight", "review", "release"] as const;
+export type MilestoneKind = (typeof MILESTONE_KINDS)[number];
+
+export const MILESTONE_LABEL: Record<MilestoneKind, string> = {
+  qa: "開始測試",
+  testflight: "進 TestFlight",
+  review: "審核結果",
+  release: "正式上線",
+};
+
+export const MILESTONE_COLOR: Record<MilestoneKind, string> = {
+  qa: "#A07B22",
+  testflight: "#4A4A7A",
+  review: "#8A5A2B",
+  release: "#3F7A52",
+};

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { STAGE_STYLE, STAGE_LABEL, STAGES, STATUS_COLOR, SOURCE_STYLE, FONT_TC } from "@/lib/designTokens";
 import type { ReleaseCardDTO } from "@/lib/types";
+import { useIsMobile } from "@/lib/useIsMobile";
 import { VersionEditForm } from "./VersionEditForm";
 
 export function VersionView({
@@ -20,9 +21,10 @@ export function VersionView({
 }) {
   const [editingVersion, setEditingVersion] = useState<string | null>(null);
   const [creatingVersion, setCreatingVersion] = useState(false);
+  const isMobile = useIsMobile();
   return (
-    <main style={{ padding: "26px 28px 60px", maxWidth: 1180 }}>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 6 }}>
+    <main style={{ padding: isMobile ? "18px 14px 40px" : "26px 28px 60px", maxWidth: 1180 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: isMobile ? "flex-start" : "flex-end", justifyContent: "space-between", marginBottom: 6 }}>
         <h1 style={{ fontFamily: FONT_TC, fontSize: 19, fontWeight: 700, margin: 0, letterSpacing: "0.01em" }}>
           各版本裝了什麼
         </h1>
@@ -72,41 +74,55 @@ export function VersionView({
             <section key={v.version} style={{ background: "#FFFFFF", border: "1px solid #D5D9DE", borderRadius: 2 }}>
               <div
                 onClick={() => onToggle(v.version)}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "168px 120px 1fr 70px 26px",
-                  alignItems: "center",
-                  gap: 18,
-                  padding: "14px 18px",
-                  cursor: "pointer",
-                  borderBottom: isOpen ? "1px solid #D5D9DE" : "none",
-                }}
+                style={
+                  isMobile
+                    ? {
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
+                        padding: "14px 16px",
+                        cursor: "pointer",
+                        borderBottom: isOpen ? "1px solid #D5D9DE" : "none",
+                      }
+                    : {
+                        display: "grid",
+                        gridTemplateColumns: "168px 120px 1fr 70px 26px",
+                        alignItems: "center",
+                        gap: 18,
+                        padding: "14px 18px",
+                        cursor: "pointer",
+                        borderBottom: isOpen ? "1px solid #D5D9DE" : "none",
+                      }
+                }
               >
-                <div style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
-                  <span
-                    onClick={(e) => {
-                      if (v.version === "未排定") return;
-                      e.stopPropagation();
-                      setEditingVersion((cur) => (cur === v.version ? null : v.version));
-                    }}
-                    title={v.version === "未排定" ? undefined : "點擊編輯版本"}
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 600,
-                      fontVariantNumeric: "tabular-nums",
-                      letterSpacing: "-0.01em",
-                      whiteSpace: "nowrap",
-                      cursor: v.version === "未排定" ? "default" : "pointer",
-                      borderBottom: v.version === "未排定" ? "none" : "1px dashed #C7CCD2",
-                    }}
-                  >
-                    {v.version}
-                  </span>
-                  {v.plannedDate && (
-                    <span style={{ fontSize: 11, color: "#878F99" }}>
-                      {new Date(v.plannedDate).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" })} 上線
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap" }}>
+                    <span
+                      onClick={(e) => {
+                        if (v.version === "未排定") return;
+                        e.stopPropagation();
+                        setEditingVersion((cur) => (cur === v.version ? null : v.version));
+                      }}
+                      title={v.version === "未排定" ? undefined : "點擊編輯版本"}
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 600,
+                        fontVariantNumeric: "tabular-nums",
+                        letterSpacing: "-0.01em",
+                        whiteSpace: "nowrap",
+                        cursor: v.version === "未排定" ? "default" : "pointer",
+                        borderBottom: v.version === "未排定" ? "none" : "1px dashed #C7CCD2",
+                      }}
+                    >
+                      {v.version}
                     </span>
-                  )}
+                    {v.plannedDate && (
+                      <span style={{ fontSize: 11, color: "#878F99" }}>
+                        {new Date(v.plannedDate).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" })} 上線
+                      </span>
+                    )}
+                  </div>
+                  {isMobile && <span style={{ color: "#99A1AA", fontSize: 11 }}>{isOpen ? "▲" : "▼"}</span>}
                 </div>
                 <div
                   style={{
@@ -122,11 +138,11 @@ export function VersionView({
                 >
                   {v.stage ? STAGE_LABEL[v.stage] ?? v.stage : "尚未排程"}
                 </div>
-                <div />
+                {!isMobile && <div />}
                 <div style={{ fontSize: 11.5, letterSpacing: "0.04em", color: "#5C646E", fontFamily: FONT_TC }}>
                   {v.stateLabel}
                 </div>
-                <div style={{ textAlign: "right", color: "#99A1AA", fontSize: 11 }}>{isOpen ? "▲" : "▼"}</div>
+                {!isMobile && <div style={{ textAlign: "right", color: "#99A1AA", fontSize: 11 }}>{isOpen ? "▲" : "▼"}</div>}
               </div>
 
               {editingVersion === v.version && (
@@ -144,6 +160,7 @@ export function VersionView({
                 <div
                   style={{
                     display: "flex",
+                    flexWrap: "wrap",
                     gap: 16,
                     padding: "8px 18px",
                     borderBottom: "1px solid #E4E7EA",
@@ -159,7 +176,17 @@ export function VersionView({
 
               {isOpen && (
                 <>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 18px", borderBottom: "1px solid #E4E7EA" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      alignItems: "center",
+                      columnGap: 10,
+                      rowGap: 6,
+                      padding: isMobile ? "12px 16px" : "12px 18px",
+                      borderBottom: "1px solid #E4E7EA",
+                    }}
+                  >
                     {STAGES.map((label, i) => (
                       <div key={label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                         <span
@@ -183,28 +210,70 @@ export function VersionView({
                       </div>
                     ))}
                   </div>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "58px 88px 1fr 280px 120px",
-                      gap: 16,
-                      padding: "9px 18px",
-                      background: "#F7F8F9",
-                      borderBottom: "1px solid #E4E7EA",
-                      fontSize: 11,
-                      letterSpacing: "0.06em",
-                      color: "#878F99",
-                    }}
-                  >
-                    <div>流水號</div>
-                    <div>主功能</div>
-                    <div>調整的項目</div>
-                    <div>對應需求</div>
-                    <div>狀態</div>
-                  </div>
+                  {!isMobile && (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "58px 88px 1fr 280px 120px",
+                        gap: 16,
+                        padding: "9px 18px",
+                        background: "#F7F8F9",
+                        borderBottom: "1px solid #E4E7EA",
+                        fontSize: 11,
+                        letterSpacing: "0.06em",
+                        color: "#878F99",
+                      }}
+                    >
+                      <div>流水號</div>
+                      <div>主功能</div>
+                      <div>調整的項目</div>
+                      <div>對應需求</div>
+                      <div>狀態</div>
+                    </div>
+                  )}
                   {v.items.map((item) => {
                     const src = SOURCE_STYLE[item.reqSource];
-                    return (
+                    return isMobile ? (
+                      <div
+                        key={item.id}
+                        onClick={() => onOpenDetail(item.reqId)}
+                        style={{ padding: "12px 16px", borderBottom: "1px solid #EDEFF1", cursor: "pointer" }}
+                        className="row-hover"
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 11.5, fontVariantNumeric: "tabular-nums", color: "#6B737D" }}>{item.seqNo}</span>
+                          <span style={{ fontFamily: FONT_TC, fontSize: 11.5, border: "1px solid #C7CCD2", padding: "2px 7px", background: "#F4F5F7" }}>
+                            {item.feature ?? "—"}
+                          </span>
+                        </div>
+                        <div style={{ fontFamily: FONT_TC, fontSize: 13.5, lineHeight: 1.45, marginBottom: 8 }}>{item.title}</div>
+                        <div style={{ fontFamily: FONT_TC, fontSize: 12.5, color: "#5C646E", lineHeight: 1.45, marginBottom: 4 }}>
+                          {item.reqTitle}
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                            <span style={{ fontSize: 11, color: "#99A1AA", fontVariantNumeric: "tabular-nums" }}>
+                              {item.reqId}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontFamily: FONT_TC,
+                                color: src.color,
+                                background: src.bg,
+                                padding: "1px 6px",
+                              }}
+                            >
+                              {item.reqSource}
+                            </span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: FONT_TC, fontSize: 12.5, color: "#3B424A" }}>
+                            <span style={{ width: 7, height: 7, background: STATUS_COLOR[item.status], display: "inline-block" }} />
+                            {item.status}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
                       <div
                         key={item.id}
                         onClick={() => onOpenDetail(item.reqId)}

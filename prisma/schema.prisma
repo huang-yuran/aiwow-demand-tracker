@@ -52,6 +52,15 @@ enum ReleaseStage {
   已上架
 }
 
+enum ReqStatusOverride {
+  規劃中
+  開發中
+  測試中
+  已完成
+  不開發
+  十月再討論
+}
+
 /// 使用者。role 對本次交付（老闆視角）非必要，全站「輸入姓名」機制自動建立/比對出來的人先不指定角色。
 model User {
   id    String    @id @default(uuid())
@@ -59,10 +68,11 @@ model User {
   role  UserRole?
   email String?   @unique
 
-  requirementsCreatedBy Requirement[] @relation("RequirementCreatedBy")
-  devItemsAssigned      DevItem[]     @relation("DevItemAssignee")
-  bugsReported          Bug[]         @relation("BugReporter")
-  bugsAssigned          Bug[]         @relation("BugAssignee")
+  requirementsCreatedBy Requirement[]  @relation("RequirementCreatedBy")
+  devItemsAssigned      DevItem[]      @relation("DevItemAssignee")
+  bugsReported          Bug[]          @relation("BugReporter")
+  bugsAssigned          Bug[]          @relation("BugAssignee")
+  scheduleNotesUpdated  ScheduleNote[] @relation("ScheduleNoteUpdatedBy")
 
   @@map("users")
 }
@@ -74,9 +84,29 @@ model Release {
   iosVersionName     String?       @map("ios_version_name") // iOS 測試版本名稱（如 TestFlight build 名稱）
   androidVersionName String?       @map("android_version_name") // Android 版本名稱
 
-  devItems DevItem[]
+  qaStartDate      DateTime? @map("qa_start_date") @db.Date // 開始測試日，時程表節點來源
+  testflightDate   DateTime? @map("testflight_date") @db.Date // 進 TestFlight 日，時程表節點來源
+  reviewResultDate DateTime? @map("review_result_date") @db.Date // 審核結果日，時程表節點來源
+  nextStepNote     String?   @map("next_step_note") // 時程表「今天」區塊的下一步文字，可編輯
+
+  devItems      DevItem[]
+  scheduleNotes ScheduleNote[]
 
   @@map("releases")
+}
+
+/// 時程表節點備註，以（版本＋節點種類）為鍵；節點日期被 PM 調整後備註仍跟著同一個節點走，不綁在日期上。
+model ScheduleNote {
+  releaseVersion String   @map("release_version")
+  release        Release  @relation(fields: [releaseVersion], references: [version], onDelete: Cascade)
+  milestoneKind  String   @map("milestone_kind") // 'qa' | 'testflight' | 'review' | 'release'
+  note           String?
+  updatedById    String?  @map("updated_by")
+  updatedBy      User?    @relation("ScheduleNoteUpdatedBy", fields: [updatedById], references: [id])
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@id([releaseVersion, milestoneKind])
+  @@map("schedule_notes")
 }
 
 model Requirement {
@@ -89,6 +119,9 @@ model Requirement {
   priority      Priority  @default(中)
   note          String?
   createdAt     DateTime  @default(now()) @map("created_at")
+
+  statusOverride     ReqStatusOverride? @map("status_override") // 手動設定的狀態，蓋過依開發細項推算出的狀態；NULL = 依開發細項自動推算
+  notDevelopedReason String?            @map("not_developed_reason") // 狀態為不開發時的理由
 
   createdById String? @map("created_by_id")
   createdBy   User?   @relation("RequirementCreatedBy", fields: [createdById], references: [id])

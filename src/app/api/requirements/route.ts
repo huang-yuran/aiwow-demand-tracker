@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { statusOf, pctOf, sourceOf, versionsOf, toDevItemDTO } from "@/lib/rollup";
+import { statusOf, pctOf, sourceOf, versionsOf, toDevItemDTO, REQ_STATUSES } from "@/lib/rollup";
 import { nextRequirementId } from "@/lib/idGen";
 import { getActorId } from "@/lib/identity";
 import { Priority } from "@prisma/client";
 
 const VALID_PRIORITIES = new Set(Object.values(Priority));
+const VALID_STATUS_OVERRIDES = new Set<string>(REQ_STATUSES);
 
 // A2 需求列表：支援狀態篩選（規劃中/開發中/測試中/已完成）與來源分頁（老闆需求/行銷需求/用戶需求）
 export async function GET(req: NextRequest) {
@@ -31,7 +32,9 @@ export async function GET(req: NextRequest) {
       note: r.note,
       createdAt: r.createdAt,
       tasks,
-      status: statusOf(tasks),
+      status: statusOf(tasks, r.statusOverride),
+      statusOverride: r.statusOverride,
+      notDevelopedReason: r.notDevelopedReason,
       pct: pctOf(tasks),
       versions: versionsOf(tasks),
       source: sourceOf(r.requesterName),
@@ -77,6 +80,12 @@ export async function POST(req: NextRequest) {
   const origin = typeof body?.origin === "string" && body.origin.trim() ? body.origin.trim() : null;
   const originDate = typeof body?.originDate === "string" && body.originDate ? new Date(body.originDate) : null;
   const note = typeof body?.note === "string" && body.note.trim() ? body.note.trim() : null;
+  const statusOverride = typeof body?.statusOverride === "string" && VALID_STATUS_OVERRIDES.has(body.statusOverride)
+    ? body.statusOverride
+    : null;
+  const notDevelopedReason = statusOverride === "不開發" && typeof body?.notDevelopedReason === "string" && body.notDevelopedReason.trim()
+    ? body.notDevelopedReason.trim()
+    : null;
 
   const id = await nextRequirementId();
   const requirement = await prisma.requirement.create({
@@ -89,6 +98,8 @@ export async function POST(req: NextRequest) {
       requesterName,
       priority,
       note,
+      statusOverride,
+      notDevelopedReason,
       createdById: getActorId(req),
     },
   });

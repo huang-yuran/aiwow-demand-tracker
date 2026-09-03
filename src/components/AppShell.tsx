@@ -4,17 +4,20 @@ import { useCallback, useEffect, useState } from "react";
 import { FONT_TC, FONT_BASE } from "@/lib/designTokens";
 import type { RequirementDTO, ReleaseCardDTO } from "@/lib/types";
 import { useActor } from "@/lib/identityContext";
+import { useIsMobile } from "@/lib/useIsMobile";
+import { ScheduleView } from "./ScheduleView";
 import { VersionView } from "./VersionView";
 import { ListView } from "./ListView";
 import { DetailSidebar } from "./DetailSidebar";
 import { ImportDialog } from "./ImportDialog";
 import { RequirementForm } from "./RequirementForm";
 
-type View = "version" | "list";
+type View = "schedule" | "version" | "list";
 
 export function AppShell() {
   const actor = useActor();
-  const [view, setView] = useState<View>("version");
+  const isMobile = useIsMobile();
+  const [view, setView] = useState<View>("schedule");
   const [requirements, setRequirements] = useState<RequirementDTO[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [releases, setReleases] = useState<ReleaseCardDTO[]>([]);
@@ -79,30 +82,58 @@ export function AppShell() {
         style={{
           background: "#171A1F",
           color: "#EDEFF2",
-          padding: "0 28px",
+          padding: isMobile ? "10px 16px" : "0 28px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          height: 52,
+          minHeight: 52,
+          flexWrap: "wrap",
+          gap: 6,
         }}
       >
         <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
           <span style={{ fontWeight: 600, letterSpacing: "0.02em", fontSize: 15 }}>版本進度台</span>
-          <span style={{ fontSize: 12, color: "#8A929C" }}>Aiwow進度開發追蹤</span>
+          {!isMobile && <span style={{ fontSize: 12, color: "#8A929C" }}>Aiwow進度開發追蹤</span>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ fontSize: 12, color: "#C7CCD2" }}>{actor?.name ?? ""}</span>
         </div>
       </header>
 
-      <nav style={{ background: "#FFFFFF", borderBottom: "1px solid #D5D9DE", padding: "0 28px", display: "flex", gap: 26 }}>
-        <button onClick={() => setView("version")} style={tabStyle(view === "version")}>
-          版本視圖
-        </button>
-        <button onClick={() => setView("list")} style={tabStyle(view === "list")}>
-          需求列表
-        </button>
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+      <nav
+        style={{
+          background: "#FFFFFF",
+          borderBottom: "1px solid #D5D9DE",
+          padding: isMobile ? "8px 16px" : "0 28px",
+          display: "flex",
+          alignItems: isMobile ? "flex-start" : "center",
+          columnGap: isMobile ? 10 : 26,
+          flexWrap: "wrap",
+          rowGap: 8,
+        }}
+      >
+        <div style={{ display: "flex", gap: isMobile ? 16 : 26 }}>
+          <button onClick={() => setView("schedule")} style={tabStyle(view === "schedule")}>
+            時程表
+          </button>
+          <button onClick={() => setView("version")} style={tabStyle(view === "version")}>
+            版本視圖
+          </button>
+          <button onClick={() => setView("list")} style={tabStyle(view === "list")}>
+            需求列表
+          </button>
+        </div>
+        <div
+          style={{
+            marginLeft: isMobile ? 0 : "auto",
+            width: isMobile ? "100%" : undefined,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            flexWrap: "wrap",
+            paddingBottom: isMobile ? 8 : 0,
+          }}
+        >
           <button
             onClick={() => setImportOpen(true)}
             style={{
@@ -139,7 +170,9 @@ export function AppShell() {
         </div>
       </nav>
 
-      {loading ? (
+      {view === "schedule" ? (
+        <ScheduleView />
+      ) : loading ? (
         <div style={{ padding: 40, fontFamily: FONT_TC, fontSize: 13, color: "#6B737D" }}>載入中…</div>
       ) : view === "version" ? (
         <VersionView

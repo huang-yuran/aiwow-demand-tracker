@@ -4,6 +4,7 @@ import { useState } from "react";
 import { STATUS_COLOR, FONT_TC } from "@/lib/designTokens";
 import type { RequirementDTO, DevItemDTO } from "@/lib/types";
 import { useActor } from "@/lib/identityContext";
+import { useIsMobile } from "@/lib/useIsMobile";
 import { RequirementForm } from "./RequirementForm";
 import { DevItemForm } from "./DevItemForm";
 
@@ -19,6 +20,7 @@ export function DetailSidebar({
   onChanged: () => void;
 }) {
   const actor = useActor();
+  const isMobile = useIsMobile();
   const [confirming, setConfirming] = useState(false);
   const [typedName, setTypedName] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -64,13 +66,13 @@ export function DetailSidebar({
           top: 0,
           right: 0,
           bottom: 0,
-          width: 520,
+          width: "min(520px, 100vw)",
           background: "#FFFFFF",
           borderLeft: "1px solid #C7CCD2",
           overflowY: "auto",
         }}
       >
-        <div style={{ padding: "22px 26px 18px", borderBottom: "1px solid #E4E7EA" }}>
+        <div style={{ padding: isMobile ? "18px 18px 16px" : "22px 26px 18px", borderBottom: "1px solid #E4E7EA" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
             <span style={{ fontSize: 12, color: "#878F99", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", flex: "none" }}>
               {detail.id}　由 {detail.requesterName} 提出
@@ -102,7 +104,7 @@ export function DetailSidebar({
           <h2 style={{ fontFamily: FONT_TC, fontSize: 17, fontWeight: 700, margin: "10px 0 14px", lineHeight: 1.5 }}>
             {detail.title}
           </h2>
-          <div style={{ display: "flex", gap: 26 }}>
+          <div style={{ display: "flex", columnGap: 26, flexWrap: "wrap", rowGap: 14 }}>
             <div>
               <div style={{ fontSize: 11, color: "#878F99", letterSpacing: "0.05em", marginBottom: 4 }}>狀態</div>
               <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: FONT_TC, fontSize: 13 }}>
@@ -138,8 +140,13 @@ export function DetailSidebar({
               <div style={{ fontSize: 13, fontVariantNumeric: "tabular-nums" }}>{detail.pct}%</div>
             </div>
           </div>
+          {detail.status === "不開發" && detail.notDevelopedReason && (
+            <div style={{ marginTop: 14, fontSize: 12, color: "#9C4A3B", fontFamily: FONT_TC, lineHeight: 1.6 }}>
+              不開發原因：{detail.notDevelopedReason}
+            </div>
+          )}
         </div>
-        <div style={{ padding: "20px 26px 40px" }}>
+        <div style={{ padding: isMobile ? "16px 18px 32px" : "20px 26px 40px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <div style={{ fontSize: 11, letterSpacing: "0.06em", color: "#878F99", fontFamily: FONT_TC }}>
               這個需求拆成以下幾件事
@@ -164,31 +171,51 @@ export function DetailSidebar({
             {detail.tasks.length === 0 && (
               <div style={{ fontFamily: FONT_TC, fontSize: 13, color: "#878F99", padding: "12px 0" }}>尚未拆分開發細項</div>
             )}
-            {detail.tasks.map((t) => (
-              <div
-                key={t.id}
-                onClick={() => setDevItemForm(t)}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 104px 96px",
-                  gap: 12,
-                  padding: "12px 0",
-                  borderBottom: "1px solid #EDEFF1",
-                  alignItems: "center",
-                  cursor: "pointer",
-                }}
-                className="row-hover"
-              >
-                <div style={{ fontFamily: FONT_TC, fontSize: 13, lineHeight: 1.5 }}>{t.plainText}</div>
-                <div style={{ fontSize: 12, fontVariantNumeric: "tabular-nums", color: "#5C646E" }}>
-                  {t.releaseVersion ?? "未排定"}
+            {detail.tasks.map((t) =>
+              isMobile ? (
+                <div
+                  key={t.id}
+                  onClick={() => setDevItemForm(t)}
+                  style={{ padding: "10px 0", borderBottom: "1px solid #EDEFF1", cursor: "pointer" }}
+                  className="row-hover"
+                >
+                  <div style={{ fontFamily: FONT_TC, fontSize: 13, lineHeight: 1.5, marginBottom: 6 }}>{t.plainText}</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 11.5, fontVariantNumeric: "tabular-nums", color: "#5C646E" }}>
+                      {t.releaseVersion ?? "未排定"}
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: FONT_TC, fontSize: 12, color: "#3B424A" }}>
+                      <span style={{ width: 7, height: 7, background: STATUS_COLOR[t.status], display: "inline-block" }} />
+                      {t.status}
+                    </span>
+                  </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: FONT_TC, fontSize: 12.5, color: "#3B424A" }}>
-                  <span style={{ width: 7, height: 7, background: STATUS_COLOR[t.status], display: "inline-block" }} />
-                  {t.status}
+              ) : (
+                <div
+                  key={t.id}
+                  onClick={() => setDevItemForm(t)}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 104px 96px",
+                    gap: 12,
+                    padding: "12px 0",
+                    borderBottom: "1px solid #EDEFF1",
+                    alignItems: "center",
+                    cursor: "pointer",
+                  }}
+                  className="row-hover"
+                >
+                  <div style={{ fontFamily: FONT_TC, fontSize: 13, lineHeight: 1.5 }}>{t.plainText}</div>
+                  <div style={{ fontSize: 12, fontVariantNumeric: "tabular-nums", color: "#5C646E" }}>
+                    {t.releaseVersion ?? "未排定"}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, fontFamily: FONT_TC, fontSize: 12.5, color: "#3B424A" }}>
+                    <span style={{ width: 7, height: 7, background: STATUS_COLOR[t.status], display: "inline-block" }} />
+                    {t.status}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
           {detail.note && (
             <div style={{ marginTop: 18, fontSize: 12, color: "#878F99", fontFamily: FONT_TC, lineHeight: 1.6 }}>{detail.note}</div>

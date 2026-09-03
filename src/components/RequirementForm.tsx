@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { FONT_TC } from "@/lib/designTokens";
 import type { RequirementDTO, AttachmentDTO } from "@/lib/types";
+import { useIsMobile } from "@/lib/useIsMobile";
+import { REQ_STATUSES } from "@/lib/rollup";
 
 const labelStyle: React.CSSProperties = {
   fontSize: 11,
@@ -36,6 +38,7 @@ export function RequirementForm({
   onSaved: () => void;
 }) {
   const isEdit = !!requirement;
+  const isMobile = useIsMobile();
   const [title, setTitle] = useState(requirement?.title ?? "");
   const [theme, setTheme] = useState(requirement?.theme ?? "");
   const [requesterName, setRequesterName] = useState(requirement?.requesterName ?? "");
@@ -43,6 +46,8 @@ export function RequirementForm({
   const [originText, setOriginText] = useState(requirement?.origin ?? "");
   const [originDate, setOriginDate] = useState(dateToInputValue(requirement?.originDate ?? null));
   const [note, setNote] = useState(requirement?.note ?? "");
+  const [statusOverride, setStatusOverride] = useState(requirement?.statusOverride ?? "");
+  const [notDevelopedReason, setNotDevelopedReason] = useState(requirement?.notDevelopedReason ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,6 +95,8 @@ export function RequirementForm({
         origin: originText.trim() || null,
         originDate: originDate || null,
         note: note.trim() || null,
+        statusOverride: statusOverride || null,
+        notDevelopedReason: statusOverride === "不開發" ? notDevelopedReason.trim() || null : null,
       };
       const res = await fetch(isEdit ? `/api/requirements/${requirement!.id}` : "/api/requirements", {
         method: isEdit ? "PATCH" : "POST",
@@ -129,15 +136,15 @@ export function RequirementForm({
       <div
         style={{
           position: "fixed",
-          top: 60,
+          top: isMobile ? 16 : 60,
           left: "50%",
           transform: "translateX(-50%)",
-          width: 560,
+          width: "min(560px, calc(100vw - 32px))",
           background: "#FFFFFF",
           border: "1px solid #C7CCD2",
           borderRadius: 2,
           fontFamily: "'IBM Plex Sans', 'Noto Sans TC', sans-serif",
-          maxHeight: "85vh",
+          maxHeight: isMobile ? "calc(100vh - 32px)" : "85vh",
           overflowY: "auto",
         }}
       >
@@ -156,7 +163,7 @@ export function RequirementForm({
             <textarea value={title} onChange={(e) => setTitle(e.target.value)} rows={3} style={{ ...inputStyle, resize: "vertical" }} />
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
             <div>
               <div style={labelStyle}>主題</div>
               <input value={theme} onChange={(e) => setTheme(e.target.value)} style={inputStyle} placeholder="例如：通知、首頁、付款" />
@@ -167,7 +174,7 @@ export function RequirementForm({
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 14 }}>
             <div>
               <div style={labelStyle}>優先級</div>
               <select value={priority} onChange={(e) => setPriority(e.target.value as typeof priority)} style={{ ...inputStyle, background: "#FFFFFF" }}>
@@ -189,6 +196,34 @@ export function RequirementForm({
           <div>
             <div style={labelStyle}>補充說明</div>
             <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} style={{ ...inputStyle, resize: "vertical" }} />
+          </div>
+
+          <div>
+            <div style={labelStyle}>狀態</div>
+            <select
+              value={statusOverride}
+              onChange={(e) => setStatusOverride(e.target.value as typeof statusOverride)}
+              style={{ ...inputStyle, background: "#FFFFFF" }}
+            >
+              <option value="">自動（依開發細項推算{isEdit ? `：${requirement!.status}` : ""}）</option>
+              {REQ_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            {statusOverride === "不開發" && (
+              <div style={{ marginTop: 8 }}>
+                <div style={labelStyle}>不開發原因</div>
+                <textarea
+                  value={notDevelopedReason}
+                  onChange={(e) => setNotDevelopedReason(e.target.value)}
+                  rows={2}
+                  style={{ ...inputStyle, resize: "vertical" }}
+                  placeholder="例如：與既有規劃衝突、優先級調整…"
+                />
+              </div>
+            )}
           </div>
 
           <div>

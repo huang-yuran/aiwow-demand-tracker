@@ -30,13 +30,17 @@ export async function GET() {
     byVersion.get(key)!.push(item);
   }
 
-  function buildCard(
-    version: string | null,
-    stage: string | null,
-    plannedDate: Date | null,
-    iosVersionName: string | null = null,
-    androidVersionName: string | null = null
-  ) {
+  function buildCard(release: {
+    version: string | null;
+    stage: string | null;
+    plannedDate: Date | null;
+    qaStartDate?: Date | null;
+    testflightDate?: Date | null;
+    reviewResultDate?: Date | null;
+    iosVersionName?: string | null;
+    androidVersionName?: string | null;
+  }) {
+    const { version, stage, plannedDate } = release;
     const items = (byVersion.get(version) ?? []).map((item) => ({
       id: item.id,
       seqNo: item.seqNo,
@@ -51,9 +55,12 @@ export async function GET() {
     return {
       version: version ?? "未排定",
       plannedDate,
+      qaStartDate: release.qaStartDate ?? null,
+      testflightDate: release.testflightDate ?? null,
+      reviewResultDate: release.reviewResultDate ?? null,
       stage,
-      iosVersionName,
-      androidVersionName,
+      iosVersionName: release.iosVersionName ?? null,
+      androidVersionName: release.androidVersionName ?? null,
       stateLabel: `${items.length} 筆`,
       steps: releaseSteps(stage),
       derivedStatus: statusOf(statuses),
@@ -64,9 +71,9 @@ export async function GET() {
   // 不管版本狀態，純依版號新到舊排（由上到下＝離現在近到遠）；未排定放最後
   const sorted = releases.slice().sort((a, b) => compareVersions(b.version, a.version));
 
-  const cards = sorted.map((r) => buildCard(r.version, r.stage, r.plannedDate, r.iosVersionName, r.androidVersionName));
+  const cards = sorted.map((r) => buildCard(r));
   if (byVersion.has(null)) {
-    cards.push(buildCard(null, null, null));
+    cards.push(buildCard({ version: null, stage: null, plannedDate: null }));
   }
 
   return NextResponse.json({ versions: cards });
@@ -96,12 +103,20 @@ export async function POST(req: NextRequest) {
     stage = body.stage as ReleaseStage;
   }
 
+  function dateField(value: unknown): Date | null {
+    return typeof value === "string" && value ? new Date(value) : null;
+  }
+
   const release = await prisma.release.create({
     data: {
       version,
       stage,
       iosVersionName: typeof body.iosVersionName === "string" && body.iosVersionName.trim() ? body.iosVersionName.trim() : null,
       androidVersionName: typeof body.androidVersionName === "string" && body.androidVersionName.trim() ? body.androidVersionName.trim() : null,
+      plannedDate: dateField(body.plannedDate),
+      qaStartDate: dateField(body.qaStartDate),
+      testflightDate: dateField(body.testflightDate),
+      reviewResultDate: dateField(body.reviewResultDate),
     },
   });
 

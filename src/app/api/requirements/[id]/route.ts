@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { statusOf, pctOf, sourceOf, versionsOf, toDevItemDTO } from "@/lib/rollup";
+import { statusOf, pctOf, sourceOf, versionsOf, toDevItemDTO, REQ_STATUSES } from "@/lib/rollup";
 import { getActorId } from "@/lib/identity";
 import { deleteAttachmentFile } from "@/lib/supabaseStorage";
 import { Priority } from "@prisma/client";
 
 const VALID_PRIORITIES = new Set(Object.values(Priority));
+const VALID_STATUS_OVERRIDES = new Set<string>(REQ_STATUSES);
 
 // 需求詳情側欄
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +34,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     note: r.note,
     createdAt: r.createdAt,
     tasks,
-    status: statusOf(tasks),
+    status: statusOf(tasks, r.statusOverride),
+    statusOverride: r.statusOverride,
+    notDevelopedReason: r.notDevelopedReason,
     pct: pctOf(tasks),
     versions: versionsOf(tasks),
     source: sourceOf(r.requesterName),
@@ -71,6 +74,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     ? (VALID_PRIORITIES.has(body.priority) ? body.priority : undefined)
     : undefined;
 
+  const statusOverride = body.statusOverride === undefined
+    ? undefined
+    : (typeof body.statusOverride === "string" && VALID_STATUS_OVERRIDES.has(body.statusOverride) ? body.statusOverride : null);
+
+  let notDevelopedReason: string | null | undefined;
+  if (statusOverride !== undefined && statusOverride !== "不開發") {
+    notDevelopedReason = null;
+  } else if (body.notDevelopedReason === undefined) {
+    notDevelopedReason = undefined;
+  } else {
+    const effectiveStatus = statusOverride ?? existing.statusOverride;
+    notDevelopedReason = effectiveStatus === "不開發" && typeof body.notDevelopedReason === "string" && body.notDevelopedReason.trim()
+      ? body.notDevelopedReason.trim()
+      : null;
+  }
+
   await prisma.requirement.update({
     where: { id },
     data: {
@@ -81,6 +100,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       origin: body.origin === undefined ? undefined : (body.origin || null),
       originDate: body.originDate === undefined ? undefined : (body.originDate ? new Date(body.originDate) : null),
       note: body.note === undefined ? undefined : (body.note || null),
+      statusOverride,
+      notDevelopedReason,
     },
   });
 

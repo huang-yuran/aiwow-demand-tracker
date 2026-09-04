@@ -46,10 +46,10 @@ enum Severity {
 
 enum ReleaseStage {
   開發中
-  QA測試中
-  已進TestFlight
-  已送審
-  已上架
+  上版進測試
+  版本完成更新
+  送審
+  上架
 }
 
 enum ReqStatusOverride {

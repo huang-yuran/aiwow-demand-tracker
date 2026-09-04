@@ -25,10 +25,10 @@ export function scheduleRange(today: Date = new Date()) {
 
 type ReleaseForCurrent = { stage: string | null; plannedDate: Date | null };
 
-// 「目前版本」：stage 非 NULL 且非「已上架」、planned_date 最近的一筆；若全部已上架，取最近上架的一筆。
+// 「目前版本」：stage 非 NULL 且非「上架」、planned_date 最近的一筆；若全部上架，取最近上架的一筆。
 export function pickCurrentRelease<T extends ReleaseForCurrent>(releases: T[]): T | null {
   const inProgress = releases
-    .filter((r) => r.stage !== null && r.stage !== "已上架")
+    .filter((r) => r.stage !== null && r.stage !== "上架")
     .sort((a, b) => {
       const at = a.plannedDate ? a.plannedDate.getTime() : Infinity;
       const bt = b.plannedDate ? b.plannedDate.getTime() : Infinity;
@@ -37,7 +37,7 @@ export function pickCurrentRelease<T extends ReleaseForCurrent>(releases: T[]): 
   if (inProgress.length > 0) return inProgress[0];
 
   const released = releases
-    .filter((r) => r.stage === "已上架")
+    .filter((r) => r.stage === "上架")
     .sort((a, b) => {
       const at = a.plannedDate ? a.plannedDate.getTime() : -Infinity;
       const bt = b.plannedDate ? b.plannedDate.getTime() : -Infinity;

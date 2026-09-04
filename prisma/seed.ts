@@ -26,10 +26,10 @@ async function main() {
 
   const [v1, v2, v3] = await Promise.all([
     prisma.release.create({
-      data: { version: "v1.2.0.24", plannedDate: new Date("2026-08-15"), stage: ReleaseStage.已上架 },
+      data: { version: "v1.2.0.24", plannedDate: new Date("2026-08-15"), stage: ReleaseStage.上架 },
     }),
     prisma.release.create({
-      data: { version: "v1.3.0.5", plannedDate: new Date("2026-09-20"), stage: ReleaseStage.QA測試中 },
+      data: { version: "v1.3.0.5", plannedDate: new Date("2026-09-20"), stage: ReleaseStage.上版進測試 },
     }),
     prisma.release.create({
       data: { version: "v1.4.0.1", plannedDate: new Date("2026-10-30"), stage: ReleaseStage.開發中 },

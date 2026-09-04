@@ -44,7 +44,7 @@ async function main() {
     await prisma.release.create({
       data: {
         version: v,
-        stage: OLD_VERSIONS.has(v) ? ReleaseStage.已上架 : ReleaseStage.開發中,
+        stage: OLD_VERSIONS.has(v) ? ReleaseStage.上架 : ReleaseStage.開發中,
       },
     });
   }

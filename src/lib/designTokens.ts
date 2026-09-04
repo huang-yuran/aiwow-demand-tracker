@@ -24,25 +24,24 @@ export const SOURCE_STYLE: Record<string, { color: string; bg: string }> = {
   "用戶需求": { color: "#6B5A2E", bg: "#F4F1E8" },
 };
 
-// 無空格識別字，跟資料庫 ReleaseStage enum 值一致（Prisma 對 enum 值的 @map 只作用於底層儲存，
-// JS 端讀寫仍是無空格識別字，所以資料邏輯一律用這組，不要用帶空格的顯示文字）
-export const STAGES = ["開發中", "QA測試中", "已進TestFlight", "已送審", "已上架"] as const;
+// 版本狀態流程，跟資料庫 ReleaseStage enum 值一致
+export const STAGES = ["開發中", "上版進測試", "版本完成更新", "送審", "上架"] as const;
 
-// 畫面顯示用的文字（帶空格），只用於渲染文字，不能拿來比對資料
+// 畫面顯示用的文字；目前跟 STAGES 識別字相同，保留這層是為了跟資料比對的字串來源分開
 export const STAGE_LABEL: Record<string, string> = {
   "開發中": "開發中",
-  "QA測試中": "QA 測試中",
-  "已進TestFlight": "已進 TestFlight",
-  "已送審": "已送審",
-  "已上架": "已上架",
+  "上版進測試": "上版進測試",
+  "版本完成更新": "版本完成更新",
+  "送審": "送審",
+  "上架": "上架",
 };
 
 export const STAGE_STYLE: Record<string, [string, string, string]> = {
   "開發中": ["#2F6BA6", "#EAF0F6", "#C6D6E5"],
-  "QA測試中": ["#6B5A2E", "#F4F1E8", "#DFD6BE"],
-  "已進TestFlight": ["#4A4A7A", "#EEEEF5", "#CFCFE2"],
-  "已送審": ["#8A5A2B", "#F7F0E9", "#E3D2C1"],
-  "已上架": ["#3F7A52", "#F0F5F1", "#C9D9CD"],
+  "上版進測試": ["#6B5A2E", "#F4F1E8", "#DFD6BE"],
+  "版本完成更新": ["#4A4A7A", "#EEEEF5", "#CFCFE2"],
+  "送審": ["#8A5A2B", "#F7F0E9", "#E3D2C1"],
+  "上架": ["#3F7A52", "#F0F5F1", "#C9D9CD"],
 };
 
 export const FONT_TC = "'Noto Sans TC', sans-serif";
